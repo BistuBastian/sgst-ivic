@@ -1,0 +1,18 @@
+import { Navigate, Outlet } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+const ProtectedRoute = ({ allowedRoles }) => {
+  const { user } = useAuth();
+
+  // Si no está logueado, al Login
+  if (!user) return <Navigate to="/login" replace />;
+
+  // Si el rol no está permitido para esta ruta, al Dashboard base
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <Outlet />;
+};
+
+export default ProtectedRoute;

@@ -1,0 +1,18 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "admin_otic",
+      "password": "admin1234",
+      "role": "Coordinador",
+      "name": "Administrador OTIC"
+    },
+    {
+      "id": 2,
+      "username": "tecnico_01",
+      "password": "tec1234",
+      "role": "Técnico",
+      "name": "Sebastián Istúriz"
+    }
+  ]
+}
