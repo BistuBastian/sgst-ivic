@@ -1,30 +1,36 @@
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
+const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
 // Configuración de variables de entorno
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
 // Esto permite visualizar en consola las peticiones realizadas al servidor
 app.use(morgan('dev'));
 
-// Esto permite que el Frontend (puerto 5173) lea los recursos del Backend (puerto 5000)
-app.use(cors({
-    origin: 'http://localhost:5173', // URL exacta del frontend
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    credentials: true
+// Configuración de CORS para permitir Vercel  
+app.use(cors({  
+  origin: process.env.CORS_ORIGIN || '*',  
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],  
+  allowedHeaders: ['Content-Type', 'Authorization']  
 }));
 
 // Middlewares de procesamiento
 app.use(express.json()); // Permite recibir datos en formato JSON
 
-// Ruta base de prueba
-app.get('/', (req, res) => {
-    res.send('Servidor del SGST-Local IVIC funcionando correctamente');
+// Endpoint de prueba  
+app.get('/health', (req, res) => {  
+  res.json({ status: 'Servidor operativo', database: 'Conectada a Supabase' });  
+});
+
+// Conexión a Supabase (PostgreSQL)  
+const pool = new Pool({  
+  connectionString: process.env.DATABASE_URL,  
+  ssl: { rejectUnauthorized: false } // Requerido para Supabase/Render  
 });
 
 // Importación de las rutas de autenticación
@@ -39,8 +45,7 @@ app.use((err, req, res, next) => {
     res.status(500).send({ message: 'Error interno en el servidor local' });
 });
 
-// Inicio del servidor persistente
-app.listen(PORT, () => {
-    console.log(`Servidor corriendo en: http://localhost:${PORT}`);
-    console.log('Presione Ctrl+C para detener');
+const PORT = process.env.PORT || 3001;  
+app.listen(PORT, () => {  
+  console.log(`Servidor corriendo en puerto ${PORT}`);  
 });
