@@ -1,22 +1,39 @@
 const express = require('express');
 const router = express.Router();
-const fs = require('fs');
-const path = require('path');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const pool = require('../db/pool');
 
-const usersPath = path.join(__dirname, '../db/users.json');
-
-router.post('/login', (req, res) => {
+router.post('/login', async (req, res) => {
     const { username, password } = req.body;
-    
-    // Lectura del archivo JSON local
-    const data = JSON.parse(fs.readFileSync(usersPath, 'utf8'));
-    const user = data.users.find(u => u.username === username && u.password === password);
 
-    if (user) {
-        // Generación del Token (expira en 8 horas según RF-144)
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'Usuario y contraseña requeridos' });
+    }
+
+    try {
+        // Buscar usuario en Supabase (PostgreSQL)
+        const result = await pool.query(
+            'SELECT * FROM usuarios WHERE username = $1 AND activo = true',
+            [username]
+        );
+
+        const user = result.rows[0];
+
+        if (!user) {
+            return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+        }
+
+        // Comparar contraseña con el hash guardado en BD
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if (!passwordMatch) {
+            return res.status(401).json({ success: false, message: 'Credenciales incorrectas' });
+        }
+
+        // Generar JWT
         const token = jwt.sign(
-            { id: user.id, role: user.role, name: user.name },
+            { id: user.id, rol: user.rol, nombre: user.nombre },
             process.env.JWT_SECRET || 'secret_key_local',
             { expiresIn: '8h' }
         );
@@ -24,10 +41,17 @@ router.post('/login', (req, res) => {
         res.json({
             success: true,
             token,
-            user: { username: user.username, role: user.role, name: user.name }
+            user: {
+                username: user.username,
+                rol: user.rol,
+                nombre: user.nombre,
+                apellido: user.apellido
+            }
         });
-    } else {
-        res.status(401).json({ success: false, message: "Credenciales incorrectas" });
+
+    } catch (error) {
+        console.error('Error en login:', error);
+        res.status(500).json({ success: false, message: 'Error interno del servidor' });
     }
 });
 

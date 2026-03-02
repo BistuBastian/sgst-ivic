@@ -1,7 +1,6 @@
 const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
-const { Pool } = require('pg');
 const dotenv = require('dotenv');
 
 // Configuración de variables de entorno
@@ -25,12 +24,6 @@ app.use(express.json()); // Permite recibir datos en formato JSON
 // Endpoint de prueba  
 app.get('/health', (req, res) => {  
   res.json({ status: 'Servidor operativo', database: 'Conectada a Supabase' });  
-});
-
-// Conexión a Supabase (PostgreSQL)  
-const pool = new Pool({  
-  connectionString: process.env.DATABASE_URL,  
-  ssl: { rejectUnauthorized: false } // Requerido para Supabase/Render  
 });
 
 // Importación de las rutas de autenticación
