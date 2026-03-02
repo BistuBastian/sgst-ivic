@@ -8,9 +8,9 @@ const ProtectedRoute = ({ allowedRoles }) => {
   if (!user) return <Navigate to="/login" replace />;
 
   // Si el rol no está permitido para esta ruta, al Dashboard base
-  if (allowedRoles && !allowedRoles.includes(user.role)) {
-    return <Navigate to="/" replace />;
-  }
+  if (allowedRoles && !allowedRoles.includes(user.rol)) {
+  return <Navigate to="/" replace />;  
+}
 
   return <Outlet />;
 };

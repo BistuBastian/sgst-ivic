@@ -9,16 +9,23 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
+
     try {
-      const data = await loginRequest(form);
-      if (data.success && data.user) {
-        login(data.user);
+      const user = await login(username, password);
+
+      // Redirección basada en el rol real de la base de datos
+      if (user.rol === "coordinador") {
+        navigate("/dashboard/coordinador");
+      } else if (user.rol === "tecnico") {
+        navigate("/dashboard/tecnico");
       } else {
-        alert("Acceso denegado: Credenciales incorrectas");
+        // Caso por defecto o error de rol
+        navigate("/dashboard");
       }
-    } catch (error) {
-      alert("Error de conexión con el servidor local");
+    } catch (err) {
+      setError(err.response?.data?.message || "Error al iniciar sesión");
     } finally {
       setLoading(false);
     }
@@ -26,10 +33,8 @@ export default function Login() {
 
   return (
     <div className="w-screen min-h-screen flex items-center justify-end bg-[url('./assets/images/Técnicos_01.png')] bg-cover">
-
       {/* Caja del formulario - Estilo estándar */}
       <div className="w-full max-w-sm mr-64 py-12 px-8 bg-background rounded-lg shadow-2xl">
-
         {/* Encabezado Institucional */}
         <div className="mb-6 border-b border-primary/50 pb-4">
           <h2 className="text-3xl font-jost font-bold text-primary uppercase text-center">
