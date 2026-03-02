@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { loginRequest } from "../services/api";
 
 export default function Login() {
   const [form, setForm] = useState({ username: "", password: "" });
+  const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -13,7 +14,7 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const user = await login(username, password);
+      const user = await login(form.username, form.password);
 
       // Redirección basada en el rol real de la base de datos
       if (user.rol === "coordinador") {
