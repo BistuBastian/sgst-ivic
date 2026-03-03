@@ -11,13 +11,32 @@ const app = express();
 // Esto permite visualizar en consola las peticiones realizadas al servidor
 app.use(morgan("dev"));
 
-// Configuración de CORS para permitir Vercel
+// Configuración de CORS para permitir Vercel y localhost
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "*",
-    methods: ["GET", "POST", "PATCH", "DELETE"],
+    origin: function (origin, callback) {
+      const allowed = [
+        process.env.CORS_ORIGIN,        // ej: https://sgst-ivic.vercel.app   (SIN / al final)
+        "http://localhost:5173",
+        "http://localhost:3000",
+      ].filter(Boolean);
+
+      // Permitir requests sin Origin (curl/postman) y los que estén en la lista o sean de *.vercel.app
+      if (!origin) return callback(null, true);
+
+      const normalizedOrigin = origin.replace(/\/$/, ""); // quita / final si viene
+
+      const isAllowed =
+        allowed.includes(normalizedOrigin) ||
+        normalizedOrigin.endsWith(".vercel.app");
+
+      if (isAllowed) return callback(null, true);
+
+      return callback(new Error(`CORS bloqueado para origen: ${origin}`));
+    },
+    methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
-  }),
+  })
 );
 
 // Middlewares de procesamiento
