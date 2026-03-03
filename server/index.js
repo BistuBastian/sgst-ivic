@@ -45,6 +45,27 @@ app.get("/health", (req, res) => {
   res.json({ status: "Servidor operativo", database: "Conectada a Supabase" });
 });
 
+// Endpoint de prueba conexión con supabase
+app.get("/usuarios", async (req, res) => {
+  try {
+    
+    const result = await pool.query(
+      "SELECT * FROM usuarios ORDER BY id ASC"
+    );
+
+    res.json({
+      status: "success",
+      count: result.rowCount,
+      data: result.rows
+    });
+  } catch (error) {
+    console.error("Error al obtener usuarios:", error);
+    res.status(500).json({ 
+      error: "Error al conectar con la base de datos de Supabase" 
+    });
+  }
+});
+
 // Importación de las rutas de autenticación
 const authRoutes = require("./routes/auth.routes");
 
