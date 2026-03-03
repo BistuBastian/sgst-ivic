@@ -5,50 +5,50 @@ const bcrypt = require("bcryptjs");
 const pool = require("../db/pool");
 
 router.post("/login", async (req, res) => {
-  console.log("LOGIN HIT");
-  console.log("BODY:", req.body);
-
   const { username, password } = req.body;
 
   try {
-    console.log("QUERYING DB...");
+    // 1. Buscar usuario
     const result = await pool.query(
-      "SELECT id, username, rol, nombre, apellido, password, activo FROM usuarios WHERE username = $1",
+      "SELECT * FROM usuarios WHERE username = $1 AND activo = TRUE",
       [username]
     );
-    console.log("DB RESULT ROWS:", result.rows.length);
 
     const user = result.rows[0];
 
-    if (!user || user.activo === false) {
-      console.log("NO USER OR INACTIVE");
+    // 2. Validar existencia
+    if (!user) {
       return res.status(401).json({ success: false, message: "Credenciales incorrectas" });
     }
 
-    console.log("CHECKING PASSWORD...");
-    const ok = await bcrypt.compare(password, user.password);
-    console.log("PASSWORD OK:", ok);
-
-    if (!ok) {
+    // 3. Validar contraseña
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
       return res.status(401).json({ success: false, message: "Credenciales incorrectas" });
     }
 
-    console.log("SIGNING TOKEN...");
+    // 4. Generar Token
     const token = jwt.sign(
       { id: user.id, rol: user.rol, nombre: user.nombre },
-      process.env.JWT_SECRET,
+      process.env.JWT_SECRET || "secret_key_local",
       { expiresIn: "8h" }
     );
 
-    console.log("SENDING RESPONSE...");
-    return res.json({
+    // 5. Enviar respuesta
+    res.json({
       success: true,
       token,
-      user: { username: user.username, rol: user.rol, nombre: user.nombre, apellido: user.apellido }
+      user: {
+        username: user.username,
+        rol: user.rol,
+        nombre: user.nombre,
+        apellido: user.apellido
+      }
     });
-  } catch (e) {
-    console.error("LOGIN ERROR:", e);
-    return res.status(500).json({ success: false, message: "Error interno del servidor" });
+
+  } catch (error) {
+    console.error("ERROR EN LOGIN:", error);
+    res.status(500).json({ success: false, message: "Error en el servidor" });
   }
 });
 
